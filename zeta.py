@@ -1,7 +1,6 @@
 import re
 import sys
 
-
 variables = {}
 imported = set()
 loaded = False
@@ -37,13 +36,23 @@ def run(filename):
             loaded = True
 
         elif not loaded:
-            raise Exception(f"Line {line_number}: Zeta is not loaded")
+            raise Exception(
+                f"Line {line_number}: Zeta is not loaded"
+            )
 
-        elif line == "$ import_lib_zeta_variables":
-            pass
+        elif line.startswith("$ import "):
+            name = line[9:].strip()
 
-        elif line.startswith("$ import_variable:"):
-            name = line.split(":", 1)[1].strip()
+            if not name:
+                raise Exception(
+                    f"Line {line_number}: No name provided to $ import"
+                )
+
+            if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", name):
+                raise Exception(
+                    f"Line {line_number}: Invalid import name '{name}'"
+                )
+
             imported.add(name)
             variables[name] = ""
 
@@ -66,10 +75,12 @@ def run(filename):
 
                 if name not in imported:
                     raise Exception(
-                        f"Line {line_number}: Variable '{name}' was not imported"
+                        f"Line {line_number}: "
+                        f"Variable '{name}' was not imported"
                     )
 
                 variables[name] = expand(value)
+
             else:
                 raise Exception(
                     f"Line {line_number}: Unknown syntax"
@@ -87,3 +98,4 @@ try:
     run(sys.argv[1])
 except Exception as error:
     print(f"Zeta error: {error}")
+    sys.exit(1)
